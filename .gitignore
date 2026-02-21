@@ -1,0 +1,21 @@
+# Terraform
+**/.terraform/*
+**/*.tfstate
+**/*.tfstate.*
+crash.log
+crash.*.log
+
+# Local overrides and sensitive/local config
+*.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Backend config files (commit only *.example)
+environments/**/backend-*.hcl
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

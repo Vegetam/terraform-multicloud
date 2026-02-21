@@ -1,0 +1,22 @@
+# environments/dev/terraform.tfvars
+# Development environment — cost-optimized, lower resilience
+
+project_name = "myapp"
+environment  = "dev"
+
+# AWS
+aws_region         = "us-east-1"
+vpc_cidr           = "10.0.0.0/16"
+availability_zones = ["us-east-1a", "us-east-1b"]
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+db_name     = "appdb"
+db_username = "dbadmin"
+alert_email = "dev-alerts@yourcompany.com"
+
+# Azure
+azure_location = "East US"
+
+# GCP
+gcp_project_id = "my-gcp-project-dev"
+gcp_region     = "us-central1"

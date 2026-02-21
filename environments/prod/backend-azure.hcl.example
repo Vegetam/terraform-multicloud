@@ -1,0 +1,8 @@
+# environments/prod/backend-azure.hcl.example
+# Copy to backend-azure.hcl and fill in real values, then:
+#   terraform init -backend-config=../environments/prod/backend-azure.hcl
+
+resource_group_name  = "REPLACE_ME_STATE_RG"
+storage_account_name = "REPLACE_ME_STATE_STORAGE"
+container_name       = "tfstate"
+key                  = "multicloud/azure/prod/terraform.tfstate"

@@ -1,0 +1,308 @@
+name: Terraform Multi-Cloud CI/CD (Enterprise)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'aws/**'
+      - 'azure/**'
+      - 'gcp/**'
+      - 'modules/**'
+      - 'environments/**'
+      - 'k8s/**'
+      - '.github/**'
+      - '.tflint.hcl'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'aws/**'
+      - 'azure/**'
+      - 'gcp/**'
+      - 'modules/**'
+      - 'environments/**'
+      - 'k8s/**'
+      - '.github/**'
+      - '.tflint.hcl'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      cloud:
+        description: "Which cloud(s) to run"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - aws
+          - azure
+          - gcp
+      enable_post_hardening:
+        description: "Apply k8s hardening resources after Terraform apply"
+        required: true
+        default: false
+        type: boolean
+      runner:
+        description: "Runner label (use 'self-hosted' for private clusters)"
+        required: true
+        default: "ubuntu-latest"
+        type: string
+
+env:
+  TF_VERSION: "1.6.0"
+  ENVIRONMENT: ${{ inputs.environment || 'dev' }}
+  SELECTED_CLOUD: ${{ inputs.cloud || 'all' }}
+  ENABLE_POST_HARDENING: ${{ inputs.enable_post_hardening || 'false' }}
+  RUNNER_LABEL: ${{ inputs.runner || 'ubuntu-latest' }}
+
+jobs:
+  fmt:
+    name: Terraform fmt (repo)
+    runs-on: ${{ env.RUNNER_LABEL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform format check
+        run: terraform fmt -check -recursive
+
+  validate:
+    name: Validate + policy checks (${{ matrix.cloud }})
+    runs-on: ${{ env.RUNNER_LABEL }}
+    needs: fmt
+    strategy:
+      matrix:
+        cloud: [aws, azure, gcp]
+    if: ${{ env.SELECTED_CLOUD == 'all' || env.SELECTED_CLOUD == matrix.cloud || github.event_name != 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+
+      - name: Terraform init (no backend) + validate
+        working-directory: ${{ matrix.cloud }}
+        run: |
+          set -euo pipefail
+          terraform init -backend=false
+          terraform validate
+
+      - name: TFLint
+        working-directory: ${{ matrix.cloud }}
+        run: |
+          set -euo pipefail
+          tflint --init
+          tflint
+
+      - name: tfsec (soft-fail in dev/PR, hard-fail in staging/prod)
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          working_directory: ${{ matrix.cloud }}
+          soft_fail: ${{ env.ENVIRONMENT == 'dev' || github.event_name == 'pull_request' }}
+
+      - name: Checkov (soft-fail in dev/PR, hard-fail in staging/prod)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ${{ matrix.cloud }}
+          framework: terraform
+          soft_fail: ${{ env.ENVIRONMENT == 'dev' || github.event_name == 'pull_request' }}
+
+  plan:
+    name: Plan (PR only) (${{ matrix.cloud }})
+    runs-on: ${{ env.RUNNER_LABEL }}
+    needs: validate
+    if: ${{ github.event_name == 'pull_request' }}
+    strategy:
+      matrix:
+        cloud: [aws, azure, gcp]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform plan (no backend)
+        working-directory: ${{ matrix.cloud }}
+        run: |
+          set -euo pipefail
+          terraform init -backend=false
+          terraform plan -var-file="../environments/dev/${{ matrix.cloud }}.tfvars" -no-color
+
+  apply:
+    name: Apply (${{ env.ENVIRONMENT }}) (${{ matrix.cloud }})
+    runs-on: ${{ env.RUNNER_LABEL }}
+    needs: validate
+    if: ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/main' && env.ENVIRONMENT == 'dev') || github.event_name == 'workflow_dispatch') && (github.event_name != 'workflow_dispatch' || env.SELECTED_CLOUD == 'all' || env.SELECTED_CLOUD == matrix.cloud) }}
+    environment: ${{ env.ENVIRONMENT }}
+    permissions:
+      id-token: write
+      contents: read
+    concurrency:
+      group: terraform-apply-${{ env.ENVIRONMENT }}-${{ matrix.cloud }}
+      cancel-in-progress: false
+    strategy:
+      matrix:
+        cloud: [aws, azure, gcp]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      # ---- Auth (OIDC, no static keys) ----
+      - name: Configure AWS credentials (OIDC)
+        if: ${{ matrix.cloud == 'aws' && !cancelled() }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Azure Login (OIDC)
+        if: ${{ matrix.cloud == 'azure' && !cancelled() }}
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: GCP Auth (Workload Identity Federation)
+        if: ${{ matrix.cloud == 'gcp' && !cancelled() }}
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        if: ${{ matrix.cloud == 'gcp' && !cancelled() }}
+        uses: google-github-actions/setup-gcloud@v2
+
+      # ---- Backend config (environment-isolated) ----
+      - name: Write backend config (AWS)
+        if: ${{ matrix.cloud == 'aws' && !cancelled() }}
+        working-directory: aws
+        run: |
+          set -euo pipefail
+          cat > backend.hcl <<EOF
+          bucket         = "${{ secrets.AWS_TFSTATE_BUCKET }}"
+          key            = "multicloud/aws/${{ env.ENVIRONMENT }}/terraform.tfstate"
+          region         = "${{ secrets.AWS_TFSTATE_REGION }}"
+          encrypt        = true
+          dynamodb_table = "${{ secrets.AWS_TFSTATE_DYNAMODB_TABLE }}"
+          EOF
+
+      - name: Write backend config (Azure)
+        if: ${{ matrix.cloud == 'azure' && !cancelled() }}
+        working-directory: azure
+        run: |
+          set -euo pipefail
+          cat > backend.hcl <<EOF
+          resource_group_name  = "${{ secrets.AZURE_TFSTATE_RESOURCE_GROUP }}"
+          storage_account_name = "${{ secrets.AZURE_TFSTATE_STORAGE_ACCOUNT }}"
+          container_name       = "${{ secrets.AZURE_TFSTATE_CONTAINER }}"
+          key                  = "multicloud/azure/${{ env.ENVIRONMENT }}/terraform.tfstate"
+          EOF
+
+      - name: Write backend config (GCP)
+        if: ${{ matrix.cloud == 'gcp' && !cancelled() }}
+        working-directory: gcp
+        run: |
+          set -euo pipefail
+          cat > backend.hcl <<EOF
+          bucket = "${{ secrets.GCP_TFSTATE_BUCKET }}"
+          prefix = "multicloud/gcp/${{ env.ENVIRONMENT }}"
+          EOF
+
+      - name: Terraform plan + apply (planfile)
+        working-directory: ${{ matrix.cloud }}
+        env:
+          # Azure provider will pick up these in addition to azure/login OIDC
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_USE_OIDC: "true"
+        run: |
+          set -euo pipefail
+          terraform init -backend-config=backend.hcl
+          terraform plan -var-file="../environments/${{ env.ENVIRONMENT }}/${{ matrix.cloud }}.tfvars" -out=tfplan
+          terraform apply -auto-approve tfplan
+
+      # ---- Optional post-apply hardening (kubectl/helm) ----
+      - name: Setup kubectl
+        if: ${{ env.ENABLE_POST_HARDENING == 'true' && !cancelled() }}
+        uses: azure/setup-kubectl@v4
+
+      - name: Setup Helm
+        if: ${{ env.ENABLE_POST_HARDENING == 'true' && !cancelled() }}
+        uses: azure/setup-helm@v4
+
+      - name: Configure kubeconfig (AWS)
+        if: ${{ env.ENABLE_POST_HARDENING == 'true' && matrix.cloud == 'aws' && !cancelled() }}
+        working-directory: aws
+        run: |
+          set -euo pipefail
+          aws eks update-kubeconfig --name "$(terraform output -raw eks_cluster_name)" --region "${{ secrets.AWS_REGION }}"
+
+      - name: Configure kubeconfig (Azure)
+        if: ${{ env.ENABLE_POST_HARDENING == 'true' && matrix.cloud == 'azure' && !cancelled() }}
+        working-directory: azure
+        run: |
+          set -euo pipefail
+          terraform output -raw aks_kube_config > kubeconfig
+          echo "KUBECONFIG=$(pwd)/kubeconfig" >> $GITHUB_ENV
+
+      - name: Configure kubeconfig (GCP)
+        if: ${{ env.ENABLE_POST_HARDENING == 'true' && matrix.cloud == 'gcp' && !cancelled() }}
+        working-directory: gcp
+        run: |
+          set -euo pipefail
+          gcloud container clusters get-credentials "$(terraform output -raw gke_cluster_name)" \
+            --region "$(terraform output -raw gcp_region)" \
+            --project "$(terraform output -raw gcp_project_id)"
+
+      - name: Apply Kubernetes hardening (namespaces + networkpolicies)
+        if: ${{ env.ENABLE_POST_HARDENING == 'true' && !cancelled() }}
+        working-directory: ${{ matrix.cloud }}
+        run: |
+          set -euo pipefail
+          kubectl apply -f ../k8s/hardening/namespaces.yaml
+          kubectl apply -f ../k8s/hardening/networkpolicies/
+
+      - name: Install Kyverno and apply baseline policies
+        if: ${{ env.ENABLE_POST_HARDENING == 'true' && !cancelled() }}
+        working-directory: ${{ matrix.cloud }}
+        run: |
+          set -euo pipefail
+          helm repo add kyverno https://kyverno.github.io/kyverno/
+          helm repo update
+
+          REPLICAS=1
+          if [ "${{ env.ENVIRONMENT }}" = "prod" ]; then
+            REPLICAS=3
+          fi
+
+          helm upgrade --install kyverno kyverno/kyverno \
+            --namespace kyverno --create-namespace \
+            --set replicaCount=$REPLICAS
+
+          # Apply baseline policies
+          kubectl apply -f ../k8s/hardening/kyverno/

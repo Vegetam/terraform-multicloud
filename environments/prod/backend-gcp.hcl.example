@@ -1,0 +1,6 @@
+# environments/prod/backend-gcp.hcl.example
+# Copy to backend-gcp.hcl and fill in real values, then:
+#   terraform init -backend-config=../environments/prod/backend-gcp.hcl
+
+bucket = "REPLACE_ME_TFSTATE_BUCKET"
+prefix = "multicloud/gcp/prod"
