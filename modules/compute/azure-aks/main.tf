@@ -12,9 +12,14 @@ variable "identity_type" {
   type    = string
   default = "SystemAssigned"
 }
-variable "enable_oms_agent"    { type = bool; default = true }
-variable "log_analytics_id"    { type = string }
-
+variable "enable_oms_agent" {
+  type    = bool
+  default = true
+}
+variable "log_analytics_id" { 
+  type    = string
+  default = null
+}
 resource "azurerm_kubernetes_cluster" "main" {
   name                = var.cluster_name
   location            = var.location
@@ -66,6 +71,9 @@ resource "azurerm_kubernetes_cluster" "main" {
 
 output "cluster_id"                  { value = azurerm_kubernetes_cluster.main.id }
 output "cluster_name"                { value = azurerm_kubernetes_cluster.main.name }
-output "kube_config"                 { value = azurerm_kubernetes_cluster.main.kube_config_raw; sensitive = true }
+output "kube_config" { 
+  value     = azurerm_kubernetes_cluster.main.kube_config_raw
+  sensitive = true 
+}
 output "kubelet_identity_object_id"  { value = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id }
 output "cluster_identity_principal_id" { value = azurerm_kubernetes_cluster.main.identity[0].principal_id }
