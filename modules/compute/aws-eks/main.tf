@@ -4,16 +4,27 @@
 # - Optional KMS secrets encryption
 # - Core managed add-ons (coredns, kube-proxy, vpc-cni) + optional EBS CSI + CloudWatch Observability
 
+# ─── Variables ───────────────────────────────────────────────────
 variable "cluster_name"    { type = string }
 variable "cluster_version" { type = string }
 variable "vpc_id"          { type = string }
 variable "subnet_ids"      { type = list(string) }
 variable "node_groups"     { type = any }
 
-variable "endpoint_public_access"  { type = bool, default = true }
-variable "endpoint_private_access" { type = bool, default = true }
-# FIX: rimosso il default 0.0.0.0/0 — il chiamante deve passare esplicitamente i CIDR consentiti.
-variable "public_access_cidrs"     { type = list(string), default = [] }
+variable "public_access_cidrs" {
+  type    = list(string)
+  default = []
+}
+
+variable "endpoint_public_access" {
+  type    = bool
+  default = true
+}
+
+variable "endpoint_private_access" {
+  type    = bool
+  default = true
+}
 
 variable "enable_secrets_encryption" {
   type    = bool
@@ -45,6 +56,7 @@ variable "enable_aws_load_balancer_controller" {
   default = true
 }
 
+# ─── Data Sources ────────────────────────────────────────────────
 data "aws_caller_identity" "current" {}
 
 # ─── IAM Role for EKS Control Plane ──────────────────────────────

@@ -3,10 +3,25 @@
 
 variable "bucket_name"           { type = string }
 variable "environment"           { type = string }
-variable "versioning_enabled"    { type = bool; default = true }
-variable "server_side_encryption" { type = string; default = "AES256" }
-variable "block_public_access"   { type = bool; default = true }
-variable "lifecycle_rules"       { type = any; default = [] }
+variable "versioning_enabled" {
+  type    = bool
+  default = true
+}
+
+variable "server_side_encryption" {
+  type    = string
+  default = "AES256"
+}
+
+variable "block_public_access" {
+  type    = bool
+  default = true
+}
+
+variable "lifecycle_rules" {
+  type    = any
+  default = []
+}
 
 resource "aws_s3_bucket" "main" {
   bucket        = var.bucket_name

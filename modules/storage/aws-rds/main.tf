@@ -2,19 +2,40 @@
 # RDS PostgreSQL with encryption, automated backups, and optional Multi-AZ
 
 variable "identifier"                  { type = string }
-variable "engine"                      { type = string; default = "postgres" }
+variable "engine" {
+  type    = string
+  default = "postgres"
+}
 variable "engine_version"              { type = string }
 variable "instance_class"              { type = string }
 variable "allocated_storage"           { type = number }
 variable "max_allocated_storage"       { type = number }
 variable "db_name"                     { type = string }
 variable "username"                    { type = string }
-variable "manage_master_user_password" { type = bool; default = true }
-variable "storage_encrypted"           { type = bool; default = true }
-variable "multi_az"                    { type = bool; default = false }
-variable "backup_retention_period"     { type = number; default = 7 }
-variable "deletion_protection"         { type = bool; default = false }
-variable "skip_final_snapshot"         { type = bool; default = true }
+variable "manage_master_user_password" {
+  type    = bool
+  default = true
+}
+variable "storage_encrypted" {
+  type    = bool
+  default = true
+}
+variable "multi_az" {
+  type    = bool
+  default = false
+}
+variable "backup_retention_period" {
+  type    = number
+  default = 7
+}
+variable "deletion_protection" {
+  type    = bool
+  default = false
+}
+variable "skip_final_snapshot" {
+  type    = bool
+  default = true
+}
 variable "vpc_security_group_ids"      { type = list(string) }
 variable "db_subnet_group_name"        { type = string }
 
