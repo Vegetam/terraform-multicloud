@@ -1,39 +1,14 @@
 # modules/networking/aws/main.tf
 # Reusable VPC module with public/private subnets, NAT, and IGW
 
-variable "project_name" {
-  type = string
-}
-
-variable "environment" {
-  type = string
-}
-
-variable "vpc_cidr" {
-  type = string
-}
-
-variable "availability_zones" {
-  type = list(string)
-}
-
-variable "public_subnets" {
-  type = list(string)
-}
-
-variable "private_subnets" {
-  type = list(string)
-}
-
-variable "enable_nat_gateway" {
-  type    = bool
-  default = true
-}
-
-variable "single_nat_gateway" {
-  type    = bool
-  default = false
-}
+variable "project_name" { type = string }
+variable "environment" { type = string }
+variable "vpc_cidr" { type = string }
+variable "availability_zones" { type = list(string) }
+variable "public_subnets" { type = list(string) }
+variable "private_subnets" { type = list(string) }
+variable "enable_nat_gateway" { type = bool; default = true }
+variable "single_nat_gateway" { type = bool; default = false }
 
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
@@ -53,14 +28,14 @@ resource "aws_internet_gateway" "main" {
 }
 
 resource "aws_subnet" "public" {
-  count                   = length(var.public_subnets)
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.public_subnets[count.index]
-  availability_zone       = var.availability_zones[count.index]
+  count             = length(var.public_subnets)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.public_subnets[count.index]
+  availability_zone = var.availability_zones[count.index]
   map_public_ip_on_launch = true
 
   tags = {
-    Name                     = "${local.name_prefix}-public-${count.index + 1}"
+    Name = "${local.name_prefix}-public-${count.index + 1}"
     "kubernetes.io/role/elb" = "1"   # For EKS load balancers
   }
 }
@@ -72,7 +47,7 @@ resource "aws_subnet" "private" {
   availability_zone = var.availability_zones[count.index]
 
   tags = {
-    Name                              = "${local.name_prefix}-private-${count.index + 1}"
+    Name = "${local.name_prefix}-private-${count.index + 1}"
     "kubernetes.io/role/internal-elb" = "1"
   }
 }
@@ -150,22 +125,8 @@ resource "aws_db_subnet_group" "main" {
   tags       = { Name = "${local.name_prefix}-db-subnet-group" }
 }
 
-output "vpc_id" {
-  value = aws_vpc.main.id
-}
-
-output "public_subnet_ids" {
-  value = aws_subnet.public[*].id
-}
-
-output "private_subnet_ids" {
-  value = aws_subnet.private[*].id
-}
-
-output "database_security_group_id" {
-  value = aws_security_group.database.id
-}
-
-output "database_subnet_group_name" {
-  value = aws_db_subnet_group.main.name
-}
+output "vpc_id" { value = aws_vpc.main.id }
+output "public_subnet_ids" { value = aws_subnet.public[*].id }
+output "private_subnet_ids" { value = aws_subnet.private[*].id }
+output "database_security_group_id" { value = aws_security_group.database.id }
+output "database_subnet_group_name" { value = aws_db_subnet_group.main.name }
