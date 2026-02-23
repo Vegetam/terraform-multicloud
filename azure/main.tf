@@ -55,7 +55,7 @@ locals {
   enable_private_endpoints = var.environment != "dev"
 
   # Normalize to lowercase alnum for resources with strict naming.
-  base = lower(regexreplace(var.project_name, "[^0-9a-z]", ""))
+  base = lower(replace(var.project_name, "/[^0-9a-z]/", ""))
 
   # Storage account: 3-24 chars, lowercase letters/numbers only, globally unique.
   storage_account_name = substr("${local.base}${var.environment}${random_string.unique.result}", 0, 24)
