@@ -215,9 +215,7 @@ resource "google_container_cluster" "main" {
 
   enable_intranode_visibility = var.environment == "prod"
 
-  shielded_nodes {
-    enabled = true
-  }
+  enable_shielded_nodes = true
 
   logging_config {
     enable_components = ["SYSTEM_COMPONENTS", "WORKLOADS"]

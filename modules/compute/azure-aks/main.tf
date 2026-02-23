@@ -8,7 +8,10 @@ variable "resource_group_name" { type = string }
 variable "vnet_subnet_id"      { type = string }
 variable "kubernetes_version"  { type = string }
 variable "default_node_pool"   { type = any }
-variable "identity_type"       { type = string; default = "SystemAssigned" }
+variable "identity_type" {
+  type    = string
+  default = "SystemAssigned"
+}
 variable "enable_oms_agent"    { type = bool; default = true }
 variable "log_analytics_id"    { type = string }
 
