@@ -1,5 +1,8 @@
 # ☁️ Terraform Multi-Cloud Infrastructure — AWS · Azure · GCP
 
+[![CI](https://github.com/Vegetam/terraform-multicloud/actions/workflows/ci.yml/badge.svg)](https://github.com/Vegetam/terraform-multicloud/actions/workflows/ci.yml)
+![License](https://img.shields.io/github/license/Vegetam/terraform-multicloud)
+
 > Infrastructure as Code demonstrating multi-cloud provisioning across AWS, Azure, and GCP with Terraform — reusable modules, remote state, environment isolation, and keyless CI/CD authentication.
 
 > ⚠️ **PoC / Reference implementation.** No secrets are committed to this repository. All credentials use environment variables or cloud-native secret managers.
