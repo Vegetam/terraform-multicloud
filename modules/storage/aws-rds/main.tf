@@ -1,17 +1,17 @@
 # modules/storage/aws-rds/main.tf
 # RDS PostgreSQL with encryption, automated backups, and optional Multi-AZ
 
-variable "identifier"                  { type = string }
+variable "identifier" { type = string }
 variable "engine" {
   type    = string
   default = "postgres"
 }
-variable "engine_version"              { type = string }
-variable "instance_class"              { type = string }
-variable "allocated_storage"           { type = number }
-variable "max_allocated_storage"       { type = number }
-variable "db_name"                     { type = string }
-variable "username"                    { type = string }
+variable "engine_version" { type = string }
+variable "instance_class" { type = string }
+variable "allocated_storage" { type = number }
+variable "max_allocated_storage" { type = number }
+variable "db_name" { type = string }
+variable "username" { type = string }
 variable "manage_master_user_password" {
   type    = bool
   default = true
@@ -36,8 +36,8 @@ variable "skip_final_snapshot" {
   type    = bool
   default = true
 }
-variable "vpc_security_group_ids"      { type = list(string) }
-variable "db_subnet_group_name"        { type = string }
+variable "vpc_security_group_ids" { type = list(string) }
+variable "db_subnet_group_name" { type = string }
 
 resource "aws_db_instance" "main" {
   identifier        = var.identifier
@@ -59,16 +59,16 @@ resource "aws_db_instance" "main" {
   db_subnet_group_name   = var.db_subnet_group_name
 
   # HA & reliability
-  multi_az                    = var.multi_az
-  backup_retention_period     = var.backup_retention_period
-  backup_window               = "03:00-04:00"
-  maintenance_window          = "sun:04:00-sun:05:00"
-  auto_minor_version_upgrade  = true
+  multi_az                   = var.multi_az
+  backup_retention_period    = var.backup_retention_period
+  backup_window              = "03:00-04:00"
+  maintenance_window         = "sun:04:00-sun:05:00"
+  auto_minor_version_upgrade = true
 
   # Security
-  storage_encrypted     = var.storage_encrypted
-  deletion_protection   = var.deletion_protection
-  skip_final_snapshot   = var.skip_final_snapshot
+  storage_encrypted         = var.storage_encrypted
+  deletion_protection       = var.deletion_protection
+  skip_final_snapshot       = var.skip_final_snapshot
   final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.identifier}-final-snapshot"
 
   # Performance Insights (free tier available)
@@ -77,6 +77,6 @@ resource "aws_db_instance" "main" {
   tags = { Name = var.identifier }
 }
 
-output "instance_id"       { value = aws_db_instance.main.id }
+output "instance_id" { value = aws_db_instance.main.id }
 output "instance_endpoint" { value = aws_db_instance.main.endpoint }
-output "instance_arn"      { value = aws_db_instance.main.arn }
+output "instance_arn" { value = aws_db_instance.main.arn }

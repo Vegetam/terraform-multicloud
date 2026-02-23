@@ -1,8 +1,8 @@
 # modules/storage/aws-s3/main.tf
 # S3 bucket with versioning, encryption, public access block, and lifecycle rules
 
-variable "bucket_name"           { type = string }
-variable "environment"           { type = string }
+variable "bucket_name" { type = string }
+variable "environment" { type = string }
 variable "versioning_enabled" {
   type    = bool
   default = true
@@ -75,5 +75,5 @@ resource "aws_s3_bucket_lifecycle_configuration" "main" {
   }
 }
 
-output "bucket_id"  { value = aws_s3_bucket.main.id }
+output "bucket_id" { value = aws_s3_bucket.main.id }
 output "bucket_arn" { value = aws_s3_bucket.main.arn }

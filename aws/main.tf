@@ -76,7 +76,7 @@ module "vpc" {
 module "eks" {
   source = "../modules/compute/aws-eks"
 
-  cluster_name    = "${var.project_name}-${var.environment}"
+  cluster_name = "${var.project_name}-${var.environment}"
   # FIX: aggiornato da 1.28 (EOL su EKS) a 1.30
   cluster_version = "1.30"
   vpc_id          = module.vpc.vpc_id
@@ -86,9 +86,9 @@ module "eks" {
   endpoint_private_access = local.eks_endpoint_private_access
   public_access_cidrs     = local.eks_public_access_cidrs
 
-  enable_secrets_encryption     = local.eks_enable_secrets_encryption
-  cluster_log_retention_days    = local.eks_cluster_log_retention_days
-  enable_ebs_csi_addon          = true
+  enable_secrets_encryption             = local.eks_enable_secrets_encryption
+  cluster_log_retention_days            = local.eks_cluster_log_retention_days
+  enable_ebs_csi_addon                  = true
   enable_cloudwatch_observability_addon = local.eks_enable_cloudwatch_observability
 
   node_groups = {
@@ -100,8 +100,8 @@ module "eks" {
     }
   }
 
-  enable_cluster_autoscaler            = true
-  enable_aws_load_balancer_controller  = true
+  enable_cluster_autoscaler           = true
+  enable_aws_load_balancer_controller = true
 }
 
 # ─── RDS PostgreSQL ──────────────────────────────────────────────
@@ -135,8 +135,8 @@ module "rds" {
 module "app_storage" {
   source = "../modules/storage/aws-s3"
 
-  bucket_name  = "${var.project_name}-${var.environment}-app-data"
-  environment  = var.environment
+  bucket_name = "${var.project_name}-${var.environment}-app-data"
+  environment = var.environment
 
   versioning_enabled     = true
   server_side_encryption = "AES256"
@@ -161,9 +161,9 @@ resource "aws_iam_role" "app_service_account" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
+      Effect    = "Allow"
       Principal = { Federated = module.eks.oidc_provider_arn }
-      Action = "sts:AssumeRoleWithWebIdentity"
+      Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringEquals = {
           "${module.eks.oidc_provider}:sub" = "system:serviceaccount:app:app-service-account"

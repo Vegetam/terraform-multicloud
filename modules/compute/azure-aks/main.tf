@@ -1,13 +1,13 @@
 # modules/compute/azure-aks/main.tf
 # AKS cluster with SystemAssigned identity, autoscaling, OMS monitoring
 
-variable "cluster_name"        { type = string }
-variable "dns_prefix"          { type = string }
-variable "location"            { type = string }
+variable "cluster_name" { type = string }
+variable "dns_prefix" { type = string }
+variable "location" { type = string }
 variable "resource_group_name" { type = string }
-variable "vnet_subnet_id"      { type = string }
-variable "kubernetes_version"  { type = string }
-variable "default_node_pool"   { type = any }
+variable "vnet_subnet_id" { type = string }
+variable "kubernetes_version" { type = string }
+variable "default_node_pool" { type = any }
 variable "identity_type" {
   type    = string
   default = "SystemAssigned"
@@ -16,7 +16,7 @@ variable "enable_oms_agent" {
   type    = bool
   default = true
 }
-variable "log_analytics_id" { 
+variable "log_analytics_id" {
   type    = string
   default = null
 }
@@ -69,11 +69,11 @@ resource "azurerm_kubernetes_cluster" "main" {
   }
 }
 
-output "cluster_id"                  { value = azurerm_kubernetes_cluster.main.id }
-output "cluster_name"                { value = azurerm_kubernetes_cluster.main.name }
-output "kube_config" { 
+output "cluster_id" { value = azurerm_kubernetes_cluster.main.id }
+output "cluster_name" { value = azurerm_kubernetes_cluster.main.name }
+output "kube_config" {
   value     = azurerm_kubernetes_cluster.main.kube_config_raw
-  sensitive = true 
+  sensitive = true
 }
-output "kubelet_identity_object_id"  { value = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id }
+output "kubelet_identity_object_id" { value = azurerm_kubernetes_cluster.main.kubelet_identity[0].object_id }
 output "cluster_identity_principal_id" { value = azurerm_kubernetes_cluster.main.identity[0].principal_id }

@@ -1,14 +1,14 @@
 # modules/networking/azure/main.tf
 # Azure VNet with AKS, database, Application Gateway, and (optional) Private Endpoints subnets.
 
-variable "project_name"        { type = string }
-variable "environment"         { type = string }
-variable "location"            { type = string }
+variable "project_name" { type = string }
+variable "environment" { type = string }
+variable "location" { type = string }
 variable "resource_group_name" { type = string }
-variable "vnet_address_space"  { type = list(string) }
-variable "aks_subnet_cidr"     { type = string }
+variable "vnet_address_space" { type = list(string) }
+variable "aks_subnet_cidr" { type = string }
 variable "database_subnet_cidr" { type = string }
-variable "appgw_subnet_cidr"   { type = string }
+variable "appgw_subnet_cidr" { type = string }
 
 # When set, an additional subnet is created for Private Endpoints.
 # Keep this subnet dedicated to Private Endpoints only.
@@ -108,8 +108,8 @@ resource "azurerm_subnet_network_security_group_association" "aks" {
 }
 
 # ─── Outputs ──────────────────────────────────────────────────────
-output "vnet_id"            { value = azurerm_virtual_network.main.id }
-output "aks_subnet_id"      { value = azurerm_subnet.aks.id }
+output "vnet_id" { value = azurerm_virtual_network.main.id }
+output "aks_subnet_id" { value = azurerm_subnet.aks.id }
 output "database_subnet_id" { value = azurerm_subnet.database.id }
-output "appgw_subnet_id"    { value = azurerm_subnet.appgw.id }
+output "appgw_subnet_id" { value = azurerm_subnet.appgw.id }
 output "private_endpoints_subnet_id" { value = try(azurerm_subnet.private_endpoints[0].id, null) }

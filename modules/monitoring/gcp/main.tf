@@ -37,7 +37,7 @@ variable "alert_email" {
 locals {
   # Avoid index errors when alert_email is empty (count = 0).
   notification_channels = try([google_monitoring_notification_channel.email[0].name], [])
-  dashboard_display    = "${var.project_name}-${var.environment}-ops"
+  dashboard_display     = "${var.project_name}-${var.environment}-ops"
 }
 
 resource "google_monitoring_notification_channel" "email" {
@@ -115,7 +115,7 @@ resource "google_monitoring_alert_policy" "gke_node_cpu" {
 
 # Simple Cloud Operations dashboard (baseline)
 resource "google_monitoring_dashboard" "main" {
-  project        = var.project_id
+  project = var.project_id
   dashboard_json = jsonencode({
     displayName = local.dashboard_display
     gridLayout = {
@@ -130,8 +130,8 @@ resource "google_monitoring_dashboard" "main" {
                   timeSeriesFilter = {
                     filter = "metric.type=\"cloudsql.googleapis.com/database/cpu/utilization\" resource.type=\"cloudsql_database\""
                     aggregation = {
-                      alignmentPeriod   = "60s"
-                      perSeriesAligner  = "ALIGN_MEAN"
+                      alignmentPeriod  = "60s"
+                      perSeriesAligner = "ALIGN_MEAN"
                     }
                   }
                 }
@@ -150,8 +150,8 @@ resource "google_monitoring_dashboard" "main" {
                   timeSeriesFilter = {
                     filter = "metric.type=\"compute.googleapis.com/instance/cpu/utilization\" resource.type=\"gce_instance\""
                     aggregation = {
-                      alignmentPeriod   = "60s"
-                      perSeriesAligner  = "ALIGN_MEAN"
+                      alignmentPeriod  = "60s"
+                      perSeriesAligner = "ALIGN_MEAN"
                     }
                   }
                 }

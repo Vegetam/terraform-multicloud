@@ -324,7 +324,7 @@ resource "google_sql_database_instance" "main" {
       record_application_tags = true
       # FIX: record_client_address is disabled by default — it may expose client IP addresses.
       # Enable only if strictly needed for debugging and after a privacy/compliance review.
-      record_client_address   = false
+      record_client_address = false
     }
 
     database_flags {
@@ -430,13 +430,13 @@ resource "google_service_account_iam_binding" "workload_identity" {
 module "monitoring" {
   source = "../modules/monitoring/gcp"
 
-  project_id             = var.gcp_project_id
-  project_name           = var.project_name
-  environment            = var.environment
-  region                 = var.gcp_region
+  project_id              = var.gcp_project_id
+  project_name            = var.project_name
+  environment             = var.environment
+  region                  = var.gcp_region
   cloud_sql_instance_name = google_sql_database_instance.main.name
   gke_cluster_name        = google_container_cluster.main.name
-  alert_email            = var.alert_email
+  alert_email             = var.alert_email
 
   depends_on = [google_project_service.apis]
 }

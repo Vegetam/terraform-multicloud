@@ -1,9 +1,9 @@
 # modules/monitoring/azure/main.tf
 # Log Analytics Workspace + Azure Monitor action group for alerts
 
-variable "project_name"        { type = string }
-variable "environment"         { type = string }
-variable "location"            { type = string }
+variable "project_name" { type = string }
+variable "environment" { type = string }
+variable "location" { type = string }
 variable "resource_group_name" { type = string }
 
 variable "alert_email" {
@@ -50,6 +50,6 @@ resource "azurerm_monitor_action_group" "alerts" {
   }
 }
 
-output "log_analytics_workspace_id"   { value = azurerm_log_analytics_workspace.main.id }
+output "log_analytics_workspace_id" { value = azurerm_log_analytics_workspace.main.id }
 output "log_analytics_workspace_name" { value = azurerm_log_analytics_workspace.main.name }
-output "action_group_id"              { value = azurerm_monitor_action_group.alerts.id }
+output "action_group_id" { value = azurerm_monitor_action_group.alerts.id }

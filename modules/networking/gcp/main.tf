@@ -1,15 +1,15 @@
 # modules/networking/gcp/main.tf
 # GCP VPC with custom subnets and secondary ranges for GKE pods/services
 
-variable "project_id"    { type = string }
-variable "region"        { type = string }
-variable "network_name"  { type = string }
-variable "subnets"       { type = any }
+variable "project_id" { type = string }
+variable "region" { type = string }
+variable "network_name" { type = string }
+variable "subnets" { type = any }
 
 resource "google_compute_network" "main" {
   name                    = var.network_name
   project                 = var.project_id
-  auto_create_subnetworks = false  # Custom subnets only
+  auto_create_subnetworks = false # Custom subnets only
   routing_mode            = "REGIONAL"
 }
 
@@ -22,7 +22,7 @@ resource "google_compute_subnetwork" "subnets" {
   network       = google_compute_network.main.id
   project       = var.project_id
 
-  private_ip_google_access = true  # Allow GCP API access without public IP
+  private_ip_google_access = true # Allow GCP API access without public IP
 
   dynamic "secondary_ip_range" {
     for_each = lookup(each.value, "secondary_ranges", [])
@@ -75,8 +75,8 @@ resource "google_compute_firewall" "internal" {
   priority      = 1000
 }
 
-output "network_id"      { value = google_compute_network.main.id }
-output "network_name"    { value = google_compute_network.main.name }
+output "network_id" { value = google_compute_network.main.id }
+output "network_name" { value = google_compute_network.main.name }
 output "network_self_link" { value = google_compute_network.main.self_link }
 
 output "gke_subnet_name" {

@@ -5,11 +5,11 @@
 # - Core managed add-ons (coredns, kube-proxy, vpc-cni) + optional EBS CSI + CloudWatch Observability
 
 # ─── Variables ───────────────────────────────────────────────────
-variable "cluster_name"    { type = string }
+variable "cluster_name" { type = string }
 variable "cluster_version" { type = string }
-variable "vpc_id"          { type = string }
-variable "subnet_ids"      { type = list(string) }
-variable "node_groups"     { type = any }
+variable "vpc_id" { type = string }
+variable "subnet_ids" { type = list(string) }
+variable "node_groups" { type = any }
 
 variable "public_access_cidrs" {
   type    = list(string)
@@ -95,8 +95,8 @@ resource "aws_kms_key" "eks" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "AllowRootAccount"
-        Effect   = "Allow"
+        Sid    = "AllowRootAccount"
+        Effect = "Allow"
         Principal = {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         }
@@ -104,8 +104,8 @@ resource "aws_kms_key" "eks" {
         Resource = "*"
       },
       {
-        Sid      = "AllowEKSClusterRoleUse"
-        Effect   = "Allow"
+        Sid    = "AllowEKSClusterRoleUse"
+        Effect = "Allow"
         Principal = {
           AWS = aws_iam_role.cluster.arn
         }

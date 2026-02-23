@@ -2,10 +2,10 @@
 # CloudWatch alarms for EKS and RDS + SNS alert topic
 
 variable "project_name" { type = string }
-variable "environment"  { type = string }
-variable "eks_cluster"  { type = string }
+variable "environment" { type = string }
+variable "eks_cluster" { type = string }
 variable "rds_instance" { type = string }
-variable "sns_email"    { type = string }
+variable "sns_email" { type = string }
 
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
@@ -47,7 +47,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_storage" {
   namespace           = "AWS/RDS"
   period              = 300
   statistic           = "Average"
-  threshold           = 5368709120  # 5 GB in bytes
+  threshold           = 5368709120 # 5 GB in bytes
   alarm_description   = "RDS free storage < 5GB"
   alarm_actions       = [aws_sns_topic.alerts.arn]
 
